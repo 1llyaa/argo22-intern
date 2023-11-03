@@ -94,6 +94,8 @@ button {
 }
 
 .details-poster {
+    width: 20%;
+    height: 20%;
     border: 1px solid #ffffff5e;
 }
 

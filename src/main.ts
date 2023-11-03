@@ -49,6 +49,8 @@ searchForm?.addEventListener('submit', async (event) => {
 });
 
 const apiKey = "d4972240";
+const placeholderImageURL = '/images/placeholder.png';
+
 let movies = [];
 let currentMovie: null | string = null;
 
@@ -102,9 +104,11 @@ window.movieDetails = async (id: string) => {
 		`;
 	}
 
+	const posterURL = movie['Poster'] === 'N/A' ? placeholderImageURL : movie['Poster'];
+
 	detailsPage.innerHTML = `
 		<button onclick="window.showSearch()">Go back</button>
-		<img class="details-poster" src="${movie['Poster']}" alt="${movie["Title"]}"/>
+		<img class="details-poster" src="${posterURL}" alt="${movie["Title"]}"/>
 		${movie["Title"]} (${movie["Year"]})
 		<br />
 		${movie["Plot"]}
@@ -147,15 +151,17 @@ let searchMovies = async (searchText: string) => {
 
 	for (let i= 0; i < movies.length; i++) {
 		let movie = movies[i];
-		// console.log(movie);
+		console.log(movie);
+
+		const posterURL = movie['Poster'] === 'N/A' ? placeholderImageURL : movie['Poster'];
 
 		movieList.innerHTML += `
 			<a class="movie" onclick="window.movieDetails('${movie['imdbID']}')">
-				<img class="movie-poster" src="${movie['Poster']}" alt="${movie["Title"]}"/>
-				<div class="movie-details">
-					<p class="movie-title">${movie["Title"]} (${movie["Year"]})</p>
-				</div>
-			</a>
+            <img class="movie-poster" src="${posterURL}" alt="${movie['Title']}"/>
+            <div class="movie-details">
+                <p class="movie-title">${movie['Title']} (${movie['Year']})</p>
+            </div>
+        </a>
 		`;
 	}
 }
