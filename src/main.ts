@@ -11,6 +11,19 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 					<input type="text" name="search" placeholder="Title" id="search-text">
 					<!-- <input type="submit" value="Search"> -->
 				</form>
+				<button id="reset-button" onclick="resetPage()">Reset</button>
+
+				
+					<div class="introduction" id="introduction">
+					    <h2>Welcome to Argo - Movie Search!</h2>
+					        <p>
+					            This is a movie search website. Simply enter the title of the movie you're looking for in the search bar above.
+					        </p>
+					        <p>
+					            Click on the movie posters to view more details about each movie.
+					        </p>
+					</div>
+
 			</div>
 			<div class="list" id="movies"></div>
 		</div>
@@ -18,7 +31,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 	</div>
 `;
 
-let searchForm = document.getElementById("search");
+// let searchForm = document.getElementById("search");
 let searchTextElement = document.getElementById("search-text") as HTMLInputElement;
 
 let movieList = document.getElementById("movies");
@@ -29,24 +42,51 @@ let detailsPage = document.getElementById("page-details");
 
 let timer = 0;
 
+const introductionSection = document.getElementById("introduction");
+
+if (introductionSection) {
+	introductionSection.classList.remove("hidden");
+}
+
+
 
 
 // Source: https://bobbyhadz.com/blog/detect-when-user-stops-typing-in-javascript
 searchTextElement?.addEventListener('keyup', () => {
 	clearTimeout(timer);
 
+	if (introductionSection) {
+		introductionSection.classList.add("hidden");
+		}
+
 	timer = setTimeout(async () => {
 		await searchMovies(searchTextElement.value);
 	}, 100);
+	if (introductionSection && searchTextElement.value === "") {
+		introductionSection.classList.remove("hidden");
+	}
 });
 
-searchForm?.addEventListener('submit', async (event) => {
-	event.preventDefault();
+searchTextElement?.addEventListener('input', async () => {
+	clearTimeout(timer);
 
-	// let searchText = (document.querySelector("input[name=\"search\"]") as HTMLInputElement).value;
+	if (introductionSection) {
+		introductionSection.classList.add("hidden");
+	}
 
-	// await searchMovies(searchTextElement.value);
+	const searchText = searchTextElement.value.trim(); // Trim whitespaces
+
+	if (searchText === "") {
+		// If the search bar is empty, show the introduction section
+		introductionSection?.classList.remove("hidden");
+		return;
+	}
+
+	timer = setTimeout(async () => {
+		await searchMovies(searchText);
+	}, 100);
 });
+
 
 const apiKey = "d4972240";
 const placeholderImageURL = '/images/placeholder.png';
@@ -132,39 +172,79 @@ window.movieDetails = async (id: string) => {
 let searchMovies = async (searchText: string) => {
 	if (movieList == null) {
 		console.error("Movie list element not found!");
-
 		return;
 	}
 
-	movieList.textContent = "Loading...";
+	// Clear the movie list content if the search bar is not empty
+	if (searchText !== "") {
+		movieList.textContent = "Loading...";
+	}
 
 	let apiResponse = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${searchText}&type=movie`);
 
 	let jsonList = await apiResponse.json();
 	movies = jsonList["Search"];
 
-	if (!movies) {
+	// Check if the search bar is empty, if so, show the introduction section
+	if (searchText === "") {
+		introductionSection?.classList.remove("hidden");
 		return;
 	}
 
+	// Clear the movie list content if there are no movies
+	if (!movies) {
+		movieList.textContent = "";
+		return;
+	}
+
+
 	movieList.textContent = "";
 
-	for (let i= 0; i < movies.length; i++) {
+	for (let i = 0; i < movies.length; i++) {
 		let movie = movies[i];
 		console.log(movie);
 
 		const posterURL = movie['Poster'] === 'N/A' ? placeholderImageURL : movie['Poster'];
 
 		movieList.innerHTML += `
-			<a class="movie" onclick="window.movieDetails('${movie['imdbID']}')">
-            <img class="movie-poster" src="${posterURL}" alt="${movie['Title']}"/>
-            <div class="movie-details">
-                <p class="movie-title">${movie['Title']} (${movie['Year']})</p>
-            </div>
-        </a>
-		`;
+      <a class="movie" onclick="window.movieDetails('${movie['imdbID']}')">
+        <img class="movie-poster" src="${posterURL}" alt="${movie['Title']}"/>
+        <div class="movie-details">
+          <p class="movie-title">${movie['Title']} (${movie['Year']})</p>
+        </div>
+      </a>
+    `;
 	}
-}
+
+	function resetPage() {
+		// Clear the search bar
+		searchTextElement.value = '';
+
+		// Show the introduction section
+		if (introductionSection) {
+			introductionSection.classList.remove("hidden");
+		}
+
+		// Clear the movie list content
+		if (movieList) {
+			movieList.textContent = '';
+		}
+
+		// Hide the details page
+		if (detailsPage) {
+			detailsPage.classList.add("hidden");
+		}
+
+		// Reset the current movie
+		currentMovie = null;
+
+
+		searchMovies('');
+	}
+
+
+	document.getElementById("reset-button")?.addEventListener('click', resetPage);
+};
 
 /* document.addEventListener('readystatechange', async () => {
 	await searchMovies("Iron");
